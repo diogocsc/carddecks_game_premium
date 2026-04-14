@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_carddecks_deck_premium_user,carddecks.deck premium user,carddecks.model_carddecks_deck,base.group_user,1,1,1,1
+access_carddecks_deck_premium_portal,carddecks.deck premium portal,carddecks.model_carddecks_deck,base.group_portal,1,1,1,1
+access_carddecks_card_premium_user,carddecks.card premium user,carddecks.model_carddecks_card,base.group_user,1,1,1,1
+access_carddecks_card_premium_portal,carddecks.card premium portal,carddecks.model_carddecks_card,base.group_portal,1,1,1,1
+

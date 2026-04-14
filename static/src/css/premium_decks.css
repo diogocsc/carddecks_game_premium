@@ -1,0 +1,12 @@
+.premium-decks .card {
+  border-radius: 12px;
+}
+
+.premium-decks .card-title {
+  font-weight: 700;
+}
+
+.premium-decks .badge {
+  font-weight: 600;
+}
+

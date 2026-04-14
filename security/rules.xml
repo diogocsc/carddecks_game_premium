@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Users/portal users can only modify their own decks -->
+        <record id="rule_deck_own_only" model="ir.rule">
+            <field name="name">Decks: own only</field>
+            <field name="model_id" ref="carddecks.model_carddecks_deck"/>
+            <field name="domain_force">[('creator_user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user')), (4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="False"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Users/portal users can only modify cards belonging to their decks -->
+        <record id="rule_cards_own_decks_only" model="ir.rule">
+            <field name="name">Cards: only in own decks</field>
+            <field name="model_id" ref="carddecks.model_carddecks_card"/>
+            <field name="domain_force">[('deck.creator_user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user')), (4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="False"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+    </data>
+</odoo>
+
