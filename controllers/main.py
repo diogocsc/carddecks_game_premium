@@ -23,6 +23,14 @@ class PremiumDecksController(http.Controller):
             raise AccessError("Not your deck")
         return deck
 
+    def _get_owned_card(self, deck, card_id):
+        card = request.env["carddecks.card"].sudo().browse(int(card_id))
+        if not card.exists():
+            return None
+        if not card.deck or card.deck.id != deck.id:
+            raise AccessError("Card not in this deck")
+        return card
+
     @http.route("/my/decks", type="http", auth="user", website=True)
     def my_decks(self, **kwargs):
         self._require_premium()
@@ -57,6 +65,7 @@ class PremiumDecksController(http.Controller):
             "name": (post.get("name") or "").strip(),
             "description": (post.get("description") or "").strip(),
             "category": int(post.get("category")) if post.get("category") else False,
+            "url": (post.get("url") or "").strip() or False,
             "creator_user_id": user.id,
             "is_user_created": True,
             "is_public": bool(post.get("is_public")),
@@ -101,6 +110,7 @@ class PremiumDecksController(http.Controller):
             "name": (post.get("name") or "").strip(),
             "description": (post.get("description") or "").strip(),
             "category": int(post.get("category")) if post.get("category") else False,
+            "url": (post.get("url") or "").strip() or False,
             "is_public": bool(post.get("is_public")),
             "listing_status": post.get("listing_status") or deck.listing_status,
             "sale_price": float(post.get("sale_price") or 0.0),
@@ -131,4 +141,56 @@ class PremiumDecksController(http.Controller):
         deck.cards.sudo().unlink()
         deck.sudo().unlink()
         return request.redirect("/my/decks")
+
+    @http.route(
+        "/my/deck/<int:deck_id>/card/<int:card_id>/edit",
+        type="http",
+        auth="user",
+        website=True,
+        methods=["GET", "POST"],
+    )
+    def card_edit(self, deck_id, card_id, **post):
+        self._require_premium()
+        deck = self._get_owned_deck(deck_id)
+        if not deck:
+            return request.not_found()
+        card = self._get_owned_card(deck, card_id)
+        if not card:
+            return request.not_found()
+
+        if request.httprequest.method == "GET":
+            categories = request.env["carddecks.category"].sudo().search([])
+            return request.render(
+                "carddecks_game_premium.card_edit_page",
+                {"deck": deck, "card": card, "categories": categories, "user": request.env.user},
+            )
+
+        write_vals = {
+            "cardText": (post.get("cardText") or "").strip(),
+            "url": (post.get("url") or "").strip() or False,
+            "source": (post.get("source") or "").strip() or False,
+            "category": int(post.get("category")) if post.get("category") else False,
+            "image_has_text_below": bool(post.get("image_has_text_below")),
+        }
+        if write_vals["cardText"]:
+            card.sudo().write(write_vals)
+        return request.redirect(f"/my/deck/{deck.id}/edit")
+
+    @http.route(
+        "/my/deck/<int:deck_id>/card/<int:card_id>/delete",
+        type="http",
+        auth="user",
+        website=True,
+        methods=["POST"],
+    )
+    def card_delete(self, deck_id, card_id, **post):
+        self._require_premium()
+        deck = self._get_owned_deck(deck_id)
+        if not deck:
+            return request.not_found()
+        card = self._get_owned_card(deck, card_id)
+        if not card:
+            return request.not_found()
+        card.sudo().unlink()
+        return request.redirect(f"/my/deck/{deck.id}/edit")
 

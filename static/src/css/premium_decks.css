@@ -2,11 +2,91 @@
   border-radius: 12px;
 }
 
+.premium-decks {
+  /*
+    Some website themes use a fixed header that overlaps #wrap contents.
+    Add top padding at the page root so the first row/title isn't hidden.
+  */
+  padding-top: var(--premium-header-offset, 0px);
+}
+
+@media (max-width: 768px) {
+  .premium-decks {
+    padding-top: var(--premium-header-offset-mobile, 0px);
+  }
+}
+
+.premium-decks .container {
+  /* Some themes use a fixed header; ensure first fields aren't hidden under it */
+  padding-top: 0;
+}
+
+.premium-decks .deck-editor-surface {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 20px;
+  overflow: visible; /* avoid clipping first labels in some themes */
+}
+
+.premium-decks .deck-editor-form {
+  padding-top: 12px; /* internal buffer above the first row */
+}
+
+.premium-decks .deck-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.premium-decks .deck-card-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.premium-decks .deck-card-text {
+  font-weight: 600;
+}
+
+.premium-decks .deck-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .premium-decks .card-title {
   font-weight: 700;
 }
 
 .premium-decks .badge {
   font-weight: 600;
+}
+
+/* Keep primary actions visible even on long forms or theme overrides */
+.premium-decks .deck-form-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  background: #fff;
+  padding: 12px 0 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Ensure card-row actions stay visible on small screens */
+@media (max-width: 768px) {
+  .premium-decks .deck-card-row {
+    flex-direction: column;
+  }
+  .premium-decks .deck-card-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 

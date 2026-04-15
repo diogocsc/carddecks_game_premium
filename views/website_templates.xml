@@ -5,7 +5,7 @@
             <t t-call="website.layout">
                 <link rel="stylesheet" type="text/css" href="/carddecks_game_premium/static/src/css/premium_decks.css"/>
                 <div id="wrap" class="premium-decks">
-                    <div class="container mt-4 mb-5">
+                    <div class="container mt-0 mb-5">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div>
                                 <h1 class="mb-1">My Decks</h1>
@@ -78,7 +78,7 @@
             <t t-call="website.layout">
                 <link rel="stylesheet" type="text/css" href="/carddecks_game_premium/static/src/css/premium_decks.css"/>
                 <div id="wrap" class="premium-decks">
-                    <div class="container mt-4 mb-5">
+                    <div class="container mt-0 mb-5">
                         <div class="mb-3">
                             <t t-if="mode == 'create'">
                                 <h1 class="mb-1">Create Deck</h1>
@@ -90,16 +90,169 @@
                             </t>
                         </div>
 
+                        <div class="deck-editor-surface">
+                            <form class="deck-editor-form"
+                                  t-att-action="('/my/deck/new' if mode == 'create' else '/my/deck/%s/edit' % deck.id)"
+                                  method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="name">Name *</label>
+                                        <input type="text" class="form-control" name="name" id="name" required=""
+                                               t-att-value="deck.name if deck else ''"/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="category">Category</label>
+                                        <select class="form-select" name="category" id="category">
+                                            <option value="">Select a category</option>
+                                            <t t-foreach="categories" t-as="category">
+                                                <option t-att-value="category.id"
+                                                        t-att-selected="deck and deck.category and deck.category.id == category.id"
+                                                        t-esc="category.name"/>
+                                            </t>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label" for="url">Deck Image URL</label>
+                                        <input type="url" class="form-control" name="url" id="url"
+                                               placeholder="https://example.com/image.jpg"
+                                               t-att-value="deck.url if deck else ''"/>
+                                        <div class="form-text">
+                                            Optional. The image will be fetched and shown when the deck loads.
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label" for="description">Description</label>
+                                        <textarea class="form-control" name="description" id="description" rows="3"><t t-esc="deck.description if deck else ''"/></textarea>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label" for="listing_status">Listing Status</label>
+                                        <select class="form-select" name="listing_status" id="listing_status">
+                                            <t t-set="current" t-value="deck.listing_status if deck else 'private'"/>
+                                            <option value="private" t-att-selected="current == 'private'">Private</option>
+                                            <option value="unlisted" t-att-selected="current == 'unlisted'">Unlisted</option>
+                                            <option value="listed_free" t-att-selected="current == 'listed_free'">Listed (Free)</option>
+                                            <option value="listed_premium" t-att-selected="current == 'listed_premium'">Listed (Premium)</option>
+                                            <option value="for_sale" t-att-selected="current == 'for_sale'">For Sale</option>
+                                        </select>
+                                        <div class="form-text">
+                                            Note: “For Sale” currently only displays a price; it does not enforce payment yet.
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label" for="sale_price">Sale Price</label>
+                                        <input type="number" step="0.01" class="form-control" name="sale_price" id="sale_price"
+                                               t-att-value="deck.sale_price if deck else ''"/>
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="is_public" id="is_public"
+                                                   t-att-checked="deck.is_public if deck else False"/>
+                                            <label class="form-check-label" for="is_public">
+                                                Make public (will require approval)
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label" for="cards_text">Add cards (one per line)</label>
+                                        <textarea class="form-control" name="cards_text" id="cards_text" rows="6"
+                                                  placeholder="Card 1&#10;Card 2&#10;Card 3"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 d-flex gap-2 deck-form-actions">
+                                    <button type="submit" class="btn btn-success">
+                                        <t t-if="mode == 'create'"><i class="fa fa-plus me-1"></i>Create</t>
+                                        <t t-else=""><i class="fa fa-save me-1"></i>Save</t>
+                                    </button>
+                                    <a href="/my/decks" class="btn btn-outline-secondary">Cancel</a>
+                                </div>
+                            </form>
+                        </div>
+
+                        <t t-if="mode == 'edit' and deck and deck.cards">
+                            <div class="deck-editor-surface mt-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h2 class="h5 mb-0">Existing cards</h2>
+                                        <div class="text-muted small">Edit or delete cards here</div>
+                                    </div>
+                                </div>
+
+                                <div class="deck-cards">
+                                    <t t-foreach="deck.cards" t-as="card">
+                                        <div class="deck-card-row">
+                                            <div class="deck-card-main">
+                                                <div class="deck-card-text" t-esc="card.cardText"/>
+                                                <t t-if="card.source">
+                                                    <div class="small text-muted">Source: <span t-esc="card.source"/></div>
+                                                </t>
+                                                <t t-if="card.url">
+                                                    <div class="small text-muted">Image URL: <span t-esc="card.url"/></div>
+                                                </t>
+                                            </div>
+                                            <div class="deck-card-actions">
+                                                <a t-attf-href="/my/deck/#{deck.id}/card/#{card.id}/edit"
+                                                   class="btn btn-outline-primary btn-sm">
+                                                    <i class="fa fa-edit me-1"></i>Edit
+                                                </a>
+                                                <form t-attf-action="/my/deck/#{deck.id}/card/#{card.id}/delete"
+                                                      method="post"
+                                                      onsubmit="return confirm('Delete this card?');">
+                                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                        <i class="fa fa-trash me-1"></i>Delete
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </t>
+        </template>
+
+        <template id="card_edit_page" name="Edit Card">
+            <t t-call="website.layout">
+                <link rel="stylesheet" type="text/css" href="/carddecks_game_premium/static/src/css/premium_decks.css"/>
+                <div id="wrap" class="premium-decks">
+                    <div class="container mt-0 mb-5">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h1 class="mb-1">Edit Card</h1>
+                                <p class="text-muted mb-0">
+                                    Deck: <strong t-esc="deck.name"/>
+                                </p>
+                            </div>
+                            <a t-attf-href="/my/deck/#{deck.id}/edit" class="btn btn-outline-secondary">
+                                <i class="fa fa-arrow-left me-1"></i>Back to Deck
+                            </a>
+                        </div>
+
                         <div class="card">
                             <div class="card-body">
-                                <form t-att-action="('/my/deck/new' if mode == 'create' else '/my/deck/%s/edit' % deck.id)" method="post">
+                                <form t-attf-action="/my/deck/#{deck.id}/card/#{card.id}/edit" method="post">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
 
                                     <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label" for="cardText">Card Text *</label>
+                                            <input type="text" class="form-control" name="cardText" id="cardText" required=""
+                                                   t-att-value="card.cardText"/>
+                                        </div>
                                         <div class="col-md-6">
-                                            <label class="form-label" for="name">Name *</label>
-                                            <input type="text" class="form-control" name="name" id="name" required=""
-                                                   t-att-value="deck.name if deck else ''"/>
+                                            <label class="form-label" for="url">Image URL</label>
+                                            <input type="url" class="form-control" name="url" id="url" t-att-value="card.url or ''"/>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="source">Source</label>
+                                            <input type="text" class="form-control" name="source" id="source" t-att-value="card.source or ''"/>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label" for="category">Category</label>
@@ -107,80 +260,31 @@
                                                 <option value="">Select a category</option>
                                                 <t t-foreach="categories" t-as="category">
                                                     <option t-att-value="category.id"
-                                                            t-att-selected="deck and deck.category and deck.category.id == category.id"
+                                                            t-att-selected="card.category and card.category.id == category.id"
                                                             t-esc="category.name"/>
                                                 </t>
                                             </select>
                                         </div>
-                                        <div class="col-12">
-                                            <label class="form-label" for="description">Description</label>
-                                            <textarea class="form-control" name="description" id="description" rows="3"><t t-esc="deck.description if deck else ''"/></textarea>
-                                        </div>
-
-                                        <div class="col-md-4">
-                                            <label class="form-label" for="listing_status">Listing Status</label>
-                                            <select class="form-select" name="listing_status" id="listing_status">
-                                                <t t-set="current" t-value="deck.listing_status if deck else 'private'"/>
-                                                <option value="private" t-att-selected="current == 'private'">Private</option>
-                                                <option value="unlisted" t-att-selected="current == 'unlisted'">Unlisted</option>
-                                                <option value="listed_free" t-att-selected="current == 'listed_free'">Listed (Free)</option>
-                                                <option value="listed_premium" t-att-selected="current == 'listed_premium'">Listed (Premium)</option>
-                                                <option value="for_sale" t-att-selected="current == 'for_sale'">For Sale</option>
-                                            </select>
-                                            <div class="form-text">
-                                                Note: “For Sale” currently only displays a price; it does not enforce payment yet.
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label" for="sale_price">Sale Price</label>
-                                            <input type="number" step="0.01" class="form-control" name="sale_price" id="sale_price"
-                                                   t-att-value="deck.sale_price if deck else ''"/>
-                                        </div>
-                                        <div class="col-md-4 d-flex align-items-end">
+                                        <div class="col-md-6 d-flex align-items-end">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="is_public" id="is_public"
-                                                       t-att-checked="deck.is_public if deck else False"/>
-                                                <label class="form-check-label" for="is_public">
-                                                    Make public (will require approval)
+                                                <input class="form-check-input" type="checkbox" name="image_has_text_below" id="image_has_text_below"
+                                                       t-att-checked="card.image_has_text_below"/>
+                                                <label class="form-check-label" for="image_has_text_below">
+                                                    Display text below image
                                                 </label>
                                             </div>
                                         </div>
-
-                                        <div class="col-12">
-                                            <label class="form-label" for="cards_text">Add cards (one per line)</label>
-                                            <textarea class="form-control" name="cards_text" id="cards_text" rows="6"
-                                                      placeholder="Card 1&#10;Card 2&#10;Card 3"></textarea>
-                                        </div>
                                     </div>
 
-                                    <div class="mt-4 d-flex gap-2">
+                                    <div class="mt-4 d-flex gap-2 deck-form-actions">
                                         <button type="submit" class="btn btn-success">
-                                            <t t-if="mode == 'create'"><i class="fa fa-plus me-1"></i>Create</t>
-                                            <t t-else=""><i class="fa fa-save me-1"></i>Save</t>
+                                            <i class="fa fa-save me-1"></i>Save Card
                                         </button>
-                                        <a href="/my/decks" class="btn btn-outline-secondary">Cancel</a>
+                                        <a t-attf-href="/my/deck/#{deck.id}/edit" class="btn btn-outline-secondary">Cancel</a>
                                     </div>
                                 </form>
                             </div>
                         </div>
-
-                        <t t-if="mode == 'edit' and deck and deck.cards">
-                            <div class="card mt-4">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <strong>Existing cards</strong>
-                                    <small class="text-muted">Delete cards in Odoo backend for now</small>
-                                </div>
-                                <div class="card-body">
-                                    <ul class="list-group">
-                                        <t t-foreach="deck.cards" t-as="card">
-                                            <li class="list-group-item">
-                                                <span t-esc="card.cardText"/>
-                                            </li>
-                                        </t>
-                                    </ul>
-                                </div>
-                            </div>
-                        </t>
                     </div>
                 </div>
             </t>
