@@ -11,7 +11,7 @@ class PremiumDecksController(http.Controller):
         if user._is_public():
             raise AccessError("Authentication required")
         subscription = request.env["user.subscription"].sudo().get_user_subscription(user.id)
-        if not subscription or subscription.plan_type != "premium":
+        if not request.env["user.subscription"].sudo().user_has_premium_access(user.id):
             raise AccessError("Premium subscription required")
         return subscription
 
